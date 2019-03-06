@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # load image
-img = cv2.imread('Forbes.png') 
+img = cv2.imread('Forbes3.png') 
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
 # define range of blue color in HSV
@@ -17,7 +17,7 @@ mask = cv2.inRange(hsv, lower_blue, upper_blue)
 # Bitwise-AND mask and original image
 res = cv2.bitwise_and(img,img, mask= mask)
 
-_, contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 contourLenghts = list(map(lambda x: len(x), contours))
 maxIndex = contourLenghts.index(max(contourLenghts))
 M = cv2.moments(contours[maxIndex])
