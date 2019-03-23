@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Mar  6 12:57:00 2019
-
-@author: Alexander
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar  5 17:40:02 2019
-@author: atm52
-"""
 import cv2
 import numpy as np
 
+#height of the final image containing detected words
+RESIZED_HEIGHT = 72
+
+
+def resizeToHeight(newHeight, oldImage):
+    """Maintains aspect ratio when resizing to specified height"""
+    (h,w) = oldImage.shape[:2]
+    r = newHeight / float(h)
+    dim = (int(w * r), newHeight)
+    resized = cv2.resize(oldImage, dim, interpolation=cv2.INTER_AREA)
+    return resized
+
 img = cv2.imread('Forbes3.png') 
+width = 640
+height = 480
+dim = (width, height)
+img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 cv2.imshow( 'Forbes', img )
 cv2.waitKey(0)
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -57,17 +62,6 @@ cv2.imwrite("test.png", inverted)
 
 cv2.waitKey(0)
 
-
-RESIZED_HEIGHT = 72
-
-def resizeToHeight(newHeight, oldImage):
-    """Maintains aspect ratio when resizing to specified height"""
-    (h,w) = oldImage.shape[:2]
-    r = newHeight / float(h)
-    dim = (int(w * r), newHeight)
-    resized = cv2.resize(oldImage, dim, interpolation=cv2.INTER_AREA)
-    return resized
-
 image = cv2.imread('test.png')
 
 #grayscale
@@ -98,7 +92,7 @@ for i, ctr in enumerate(sorted_ctrs):
     height, width, channels = roi.shape
 
     #only choose words of a certain size
-    if height >= image.shape[0]* 0.3:
+    if height >= image.shape[0]* 0.4:
         if width >= image.shape[1]*0.2 and width <= image.shape[1]*0.9:
              roi = resizeToHeight(RESIZED_HEIGHT, roi)
              streetnameWords.append(roi)
