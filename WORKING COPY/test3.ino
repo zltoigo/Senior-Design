@@ -30,7 +30,7 @@ void setup(void)
 void loop(void) 
 {
     //Serial.print("HELLO!");
-    myCam.capture();
+//    myCam.capture();
     int switchState = digitalRead(switchPin);
     if (switchState != oldSwitchState)
     {
