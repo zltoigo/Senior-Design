@@ -19,7 +19,7 @@ class BluetoothManager:
         # Send start flag
         self.port.write(bytearray([1]))
 
-        self.imageCounter = -2
+        self.imageCounter = -1
 
         self.prepareForNewImage()
 
