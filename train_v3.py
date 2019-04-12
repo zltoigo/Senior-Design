@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Mar 31 17:31:34 2019
+Created on Sun Apr  7 20:07:48 2019
+
+@author: Alexander
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr  3 14:07:26 2019
 
 @author: Alexander
 """
@@ -50,10 +57,6 @@ def unzip(b):
     xs, ys = zip(*b)
     xs = numpy.array(xs)
     ys = numpy.array(ys)
-    #print("xs")
-    print(xs[0])
-    #print("ys ")
-    print(ys[0])
     return xs, ys
 
 
@@ -107,7 +110,7 @@ def read_batches(batch_size):
 def get_loss(y, y_):
     # Calculate the loss from digits being incorrect.  Don't count loss from
     # digits that are in non-present plates.
-    digits_loss = tf.nn.softmax_cross_entropy_with_logits_v2(
+    digits_loss = tf.nn.softmax_cross_entropy_with_logits(
                                           logits = tf.reshape(y[:, 1:],
                                                      [-1, len(common.CHARS)]),
                                           labels = tf.reshape(y_[:, 1:],
@@ -156,7 +159,7 @@ def train(learn_rate, report_steps, batch_size, initial_weights=None):
         assert len(params) == len(initial_weights)
         assign_ops = [w.assign(v) for w, v in zip(params, initial_weights)]
 
-    init = tf.global_variables_initializer()
+    init = tf.initialize_all_variables()
 
     def vec_to_plate(v):
         return "".join(common.CHARS[i] for i in v)
@@ -177,8 +180,8 @@ def train(learn_rate, report_steps, batch_size, initial_weights=None):
                                               r[3] < 0.5)))
         r_short = (r[0][:190], r[1][:190], r[2][:190], r[3][:190])
         for b, c, pb, pc in zip(*r_short):
-            print ( "{} {} <-> {} {}".format(vec_to_plate(c), pc,
-                                           vec_to_plate(b), float(pb)) )
+            print ("{} {} <-> {} {}".format(vec_to_plate(c), pc,
+                                           vec_to_plate(b), float(pb)))
         num_p_correct = numpy.sum(r[2] == r[3])
 
         print ("B{:3d} {:2.02f}% {:02.02f}% loss: {} "
@@ -193,37 +196,8 @@ def train(learn_rate, report_steps, batch_size, initial_weights=None):
                                            for b, c, pb, pc in zip(*r_short)))
 
     def do_batch():
-        #print( batch_xs )
-#        print( batch_ys )
-        
-        #batch_x = numpy.vstack([numpy.expand_dims(x,0) for x in batch_xs])
-        print (batch_xs.shape)
-        print (batch_xs.dtype)
-        print (batch_ys.shape)
-        print (batch_ys.dtype)
-        
-        #batch_y = numpy.array( batch_ys, dtype = float32 )
-        
-#        batch_x = numpy.reshape( batch_xs, batch_xs.shape )
-#        batch_y = numpy.reshape( batch_ys, batch_ys.shape )
-#              
-        #x = tf.placeholder( tf.float64, shape = (50, 32, 128) )
-        #y = tf.placeholder( tf.float64, shape = (50, 32, 128) )
-        
-        #batch_y = numpy.vstack([numpy.expand_dims(x,449) for x in batch_ys])
-        
-        #for k in batch_xs:
-            #cv2.resize( k, (144,144) )
-            
-        #for k in batch_ys:
-            #cv2.resize( k, (144, 144) )
-        
-        #feed_dict = dict({x: batch_x, y: batch_ys})
-        
-        #batch_x = tf.image.resize_images( batch_xs, [244,244])
-        
         sess.run(train_step,
-                 feed_dict = {x: batch_xs, y: batch_ys})
+                 feed_dict={x: batch_xs, y_: batch_ys})
         if batch_idx % report_steps == 0:
             do_report()
 
@@ -244,7 +218,7 @@ def train(learn_rate, report_steps, batch_size, initial_weights=None):
                 if batch_idx % report_steps == 0:
                     batch_time = time.time()
                     if last_batch_idx != batch_idx:
-                        print ("time for 60 batches {}".format(
+                        print ( "time for 60 batches {}".format(
                             60 * (last_batch_time - batch_time) /
                                             (last_batch_idx - batch_idx)) )
                         last_batch_idx = batch_idx

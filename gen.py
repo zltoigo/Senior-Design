@@ -36,7 +36,7 @@ __all__ = (
 
 
 #Python 3 librries
-import itertools, math, os, random, sys, string, shutil, time, string, argparse
+import itertools, math, os, random, sys, string, shutil, time, argparse
 
 #Import 3rd party libraries
 #Python Image Library
@@ -181,6 +181,12 @@ def generateSignText():
     # numWords = 2 if isNumberedStreet else 1
     # for i in range(0, numWords):
         #word = ''.join(random.choices(string.ascii_uppercase, k = random.randint(1, 8)))
+    f=open(common.fnStreetList)
+    for line in f:
+        if(not is_ascii(line)):
+            continue
+        #remove trailing \n
+        streetNames.append(line.upper().rstrip())
     word = random.choice(streetNames)
     streetName = streetName + word
     return "{} {}".format(streetName, random.choice(common.STREETS))
