@@ -5,8 +5,9 @@ import os
 import random
 import numpy as np
 import cv2
+import tensorflow as tf
 import common
-from Preprocessor import preprocess
+import Preprocessor
 
 
 class Sample:
@@ -22,18 +23,19 @@ class Batch:
 		self.imgs = np.stack(imgs, axis=0)
 		self.gtTexts = gtTexts
 
-
 class DataLoader:
-	def __init__(self, filePath, batchSize, imgSize, maxTextLen):
+	numEpochs = 5
+	# batchSize = 50
+	trainingIterator = None
+	validationIterator = None
+	
+	def __init__(self, batchSize, imgSize, maxTextLen):
 		"loader for dataset at given location, preprocess images and text according to parameters"
-
-		self.dataAugmentation = False
 		self.currIdx = 0
-		self.batchSize = batchSize
-		self.imgSize = imgSize
-		self.samples = []
-		bad_samples = []
 
+		#dict with filename: gtText
+		samples = {}
+		bad_samples = []
 
 		f=open(common.fnWords)
 		chars = set()
@@ -43,7 +45,7 @@ class DataLoader:
 					continue
 
 				lineSplit = line.strip().split(' ')
-				fileName = "{}/{:08d}.png".format(filePath, int(lineSplit[0]))
+				fileName = "{}/{:08d}.png".format(common.imgPath, int(lineSplit[0]))
 				gtText = self.truncateLabel(' '.join(lineSplit[1: ]), maxTextLen)
 				chars = chars.union(set(list(gtText)))
 		
@@ -53,26 +55,25 @@ class DataLoader:
 					continue
 
 				# put sample into list
-				self.samples.append(Sample(gtText, fileName))
+				samples[fileName] = gtText
 
-		# split into training and validation set: 95% - 5%
-		splitIdx = int(0.95 * len(self.samples))
-		self.trainSamples = self.samples[:splitIdx]
-		self.validationSamples = self.samples[splitIdx:]
+		self.charList = sorted(list(chars))
+		# for(fileName, gtText) in samples.items():
+		# 	samples[fileName] = [self.charList.index(c) for c in gtText]
+			
+		splitIdx = int(0.80 * len(samples.keys()))
+		trainSamples = dict(list(samples.items())[:splitIdx])
+		validationSamples = dict(list(samples.items())[splitIdx:])
 
 		# put words into lists
-		self.trainWords = [x.gtText for x in self.trainSamples]
-		self.validationWords = [x.gtText for x in self.validationSamples]
-
-		# number of randomly chosen samples per epoch for training 
-		self.numTrainSamplesPerEpoch = 20000 
-		
-		# start with train set
-		self.trainSet()
-
+		self.trainWords = list(trainSamples.values())
+		self.trainFiles = list(trainSamples.keys())
+		self.validationWords = list(validationSamples.values())
+		self.validationFiles = list(validationSamples.keys())
 		# list of all chars in dataset
-		self.charList = sorted(list(chars))
 
+		self.traingIterator = self.createTrainingSet(batchSize)
+		self.validationIterator = self.createValidationSet(batchSize)
 
 	def truncateLabel(self, text, maxTextLen):
 		# ctc_loss can't compute loss if it cannot find a mapping between text label and input 
@@ -88,38 +89,27 @@ class DataLoader:
 				return text[:i]
 		return text
 
-
-	def trainSet(self):
-		"switch to randomly chosen subset of training set"
-		self.dataAugmentation = True
-		self.currIdx = 0
-		random.shuffle(self.trainSamples)
-		self.samples = self.trainSamples[:self.numTrainSamplesPerEpoch]
-
-	
-	def validationSet(self):
-		"switch to validation set"
-		self.dataAugmentation = False
-		self.currIdx = 0
-		self.samples = self.validationSamples
-
-
-	def getIteratorInfo(self):
-		"current batch index and overall number of batches"
-		return (self.currIdx // self.batchSize + 1, len(self.samples) // self.batchSize)
-
-
-	def hasNext(self):
-		"iterator"
-		return self.currIdx + self.batchSize <= len(self.samples)
-		
-		
-	def getNext(self):
-		"iterator"
-		batchRange = range(self.currIdx, self.currIdx + self.batchSize)
-		gtTexts = [self.samples[i].gtText for i in batchRange]
-		imgs = [preprocess(cv2.imread(self.samples[i].filePath, cv2.IMREAD_GRAYSCALE), self.imgSize, self.dataAugmentation) for i in batchRange]
-		self.currIdx += self.batchSize
-		return Batch(gtTexts, imgs)
+	def createTrainingSet(self, batchSize):
+		trainingSet = tf.data.Dataset.from_tensor_slices((self.trainFiles, self.trainWords))
+		trainingSet = trainingSet.shuffle(len(self.trainFiles))
+		trainingSet = trainingSet.map(Preprocessor.loadImages, num_parallel_calls=4)
+		trainingSet = trainingSet.map(Preprocessor.preprocess, num_parallel_calls = 4)
+		# trainingSet = trainingSet.map(Preprocessor.dataAugmentation, num_parallel_calls = 4)
+		trainingSet = trainingSet.batch(batchSize)
+		trainingSet = trainingSet.prefetch(1)
+		return trainingSet
 
 	
+	def createValidationSet(self, batchSize):
+		validationSet = tf.data.Dataset.from_tensor_slices((self.validationFiles, self.validationWords))
+		validationSet = validationSet.shuffle(len(self.validationFiles))
+		validationSet = validationSet.map(Preprocessor.loadImages, num_parallel_calls=4)
+		validationSet = validationSet.map(Preprocessor.preprocess, num_parallel_calls = 4)
+		# validationSet = validationSet.map(Preprocessor.dataAugmentation, num_parallel_calls = 4)
+		validationSet = validationSet.batch(batchSize)
+		validationSet = validationSet.prefetch(1)
+		return validationSet
+
+	
+		
+

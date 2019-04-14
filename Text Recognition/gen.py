@@ -39,6 +39,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 import cv2          #OpenCv
 import numpy        #Numpy
+from tqdm import tqdm
 
 #Import my custom libraries
 import common
@@ -257,7 +258,7 @@ def generate_bg(num_bg_images):
     return bg
 
 
-def generate_im(char_ims, num_bg_images):
+def generate_im(char_ims):
     #bg = generate_bg(num_bg_images)
 
     sign, signMask, code = generateSign(FONT_HEIGHT, char_ims)
@@ -303,9 +304,9 @@ def generate_ims():
     """
     variation = 1.0
     fonts, font_char_ims = load_fonts(common.fontDirectory)
-    num_bg_images = len(os.listdir(common.backgroundDirectory))
+
     while True:
-        yield generate_im(font_char_ims[random.choice(fonts)], num_bg_images)
+        yield generate_im(font_char_ims[random.choice(fonts)])
 
 def setupBatchFileIO():
     if(os.path.exists(common.imageDirectory)):
@@ -334,6 +335,7 @@ def is_ascii(s):
     return all(ord(c) < 128 for c in s)
 
 
+
 if __name__ == "__main__":
     # optional command line args
     parser = argparse.ArgumentParser()
@@ -349,14 +351,16 @@ if __name__ == "__main__":
         print("Generating Images")
         numImages = int(args.count)
         im_gen = itertools.islice(generate_ims(), numImages)
-        common.printProgressBar(0, numImages, prefix = 'Progress:', suffix = 'Complete', length = 50)
+        # common.printProgressBar(0, numImages, prefix = 'Progress:', suffix = 'Complete', length = 50)
         #p is the out of bounds flag
-        for img_idx, (im, text, inBounds) in enumerate(im_gen):
+        fonts, font_char_ims = load_fonts(common.fontDirectory)
+        for img_idx in tqdm(range(numImages)):
+            im, text, inBounds = generate_im(font_char_ims[random.choice(fonts)])
             fname = "data/images/{:08d}.png".format(img_idx)
             #update ground truth file
             gtFile.write("{} {}\n".format(img_idx, text)) 
             cv2.imwrite(fname, im * 255.)
-            common.printProgressBar(img_idx, numImages, prefix = 'Progress:', suffix = 'Complete', length = 50)
+            # common.printProgressBar(img_idx, numImages, prefix = 'Progress:', suffix = 'Complete', length = 50)
         gtFile.close()
     
     else:

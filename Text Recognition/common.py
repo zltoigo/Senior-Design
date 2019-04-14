@@ -47,6 +47,7 @@ fnCharList = '.\model\charList.txt'
 fnStreetList = '.\\data\\allstreets.txt'
 fnInfer = ".\\data\\test.png"
 fnAccuracy = '.\\model\\accuracy.txt'
+imgPath = 'data/images'
 
 
 

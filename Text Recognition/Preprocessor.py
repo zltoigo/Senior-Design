@@ -4,39 +4,33 @@ from __future__ import print_function
 import random
 import numpy as np
 import cv2
+import tensorflow as tf
 
 
-def preprocess(img, imgSize, dataAugmentation=False):
-	"put img into target img of size imgSize, transpose for TF and normalize gray-values"
+def loadImages(filePath, gtText):
+	image_string = tf.read_file(filePath)
 
-	# there are damaged files in IAM dataset - just use black image instead
-	if img is None:
-		img = np.zeros([imgSize[1], imgSize[0]])
+	# Don't use tf.image.decode_image, or the output shape will be undefined
+	#channels=1 -->grayscale
+	image = tf.image.decode_png(image_string, channels=1)
 
-	# increase dataset size by applying random stretches to the images
-	if dataAugmentation:
-		stretch = (random.random() - 0.5) # -0.5 .. +0.5
-		wStretched = max(int(img.shape[1] * (1 + stretch)), 1) # random width, but at least 1
-		img = cv2.resize(img, (wStretched, img.shape[0])) # stretch horizontally by factor 0.5 .. 1.5
-	
-	# create target image and copy sample image into it
-	(wt, ht) = imgSize
-	(h, w) = img.shape
-	fx = w / wt
-	fy = h / ht
-	f = max(fx, fy)
-	newSize = (max(min(wt, int(w / f)), 1), max(min(ht, int(h / f)), 1)) # scale according to f (result at least 1 and at most wt or ht)
-	img = cv2.resize(img, newSize)
-	target = np.ones([ht, wt]) * 255
-	target[0:newSize[1], 0:newSize[0]] = img
+	# This will convert to float values in [0, 1]
+	image = tf.image.convert_image_dtype(image, tf.float32)
+	return image, gtText
 
-	# transpose for TF
-	img = cv2.transpose(target)
+def preprocess(img, gtText):
+	resizedImage = tf.image.resize_images(img, [128,32])
 
 	# normalize
-	(m, s) = cv2.meanStdDev(img)
-	m = m[0][0]
-	s = s[0][0]
-	img = img - m
-	img = img / s if s>0 else img
-	return img
+	normalizedImage = tf.image.per_image_standardization(resizedImage)
+	# print("normalized image")
+	# print(normalizedImage)
+	return normalizedImage, gtText
+
+def dataAugmentation(img, gtText):
+	stretch = (random.random() - 0.5) # -0.5 .. +0.5
+	shapeArray = img.get_shape().as_list() #get dimensions as ints so they can be mulitplied
+	wStretched = int(max(shapeArray[1]*(1+stretch), 1)) # random width, but at least 1
+	img = tf.image.resize(img, [wStretched, shapeArray[0]])
+	print(img.shape)
+	return img, gtText

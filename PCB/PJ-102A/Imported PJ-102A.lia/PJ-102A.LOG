@@ -1,0 +1,29 @@
+PCAD Importer Log
+Project : PJ-102A.LibPkg
+
+Section : C:\Users\aqhu\Documents\Spring2019\Senior Design\PJ-102A\PJ-102A.lia
+    Section : PCB Library - PJ-102A.PcbLib
+        Section : Load Messages
+            Warning - 1 : Skipping Token 3PIN_POWER_JACK On Line 135
+            Warning - 1 : Skipping Token attachedSymbol On Line 198
+        EndSection
+
+        Section : Import Messages
+        EndSection
+    EndSection
+
+    Section : SCH Library - PJ-102A.SchLib
+        Section : Parsing Messages
+            Warning - 1 : Skipping Token padStyleDef On Line 9
+            Warning - 1 : Skipping Token multiLayer On Line 84
+            Warning - 1 : Skipping Token layerContents On Line 89
+            Warning - 1 : Skipping Token layerContents On Line 95
+            Warning - 1 : Skipping Token layerContents On Line 103
+            Warning - 1 : Skipping Token layerContents On Line 111
+            Warning - 1 : Skipping Token layerContents On Line 119
+        EndSection
+
+        Section : Generating SCH Library - PJ-102A.SchLib
+        EndSection
+    EndSection
+EndSection
