@@ -13,10 +13,11 @@ import imutils
 
 execution_path = os.getcwd()
 
-FILENAME = input("Name the file (without .png): " )
+FILENAME = input("\nName the file (without .png): " )
 
 file = FILENAME + '.png' 
 
+print('\n')
 
 detector = ObjectDetection()
 detector.setModelTypeAsRetinaNet()
@@ -47,8 +48,8 @@ xMin = coordinates1[0]
 
 image = cv2.imread( FILENAME + 'custom.png' )
 height, width, _ = image.shape
-cropped = image[yMin:yMax, xMin:width ]
-cv2.imshow( 'traffic lights', cropped )
+cropped1 = image[yMin:yMax, xMin:width ]
+cv2.imshow( 'traffic lights', cropped1 )
 cv2.waitKey(0)
 
 #############################################################
@@ -136,7 +137,7 @@ def transform(pos):
 
 # load image
 
-img = cv2.imread('Forbes3custom.png')
+img = cv2.imread(FILENAME + 'custom.png')
 
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
