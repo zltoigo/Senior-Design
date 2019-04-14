@@ -19,11 +19,16 @@ file = FILENAME + '.png'
 
 print('\n')
 
+image = cv2.imread(file)
+image = cv2.resize( image, (800, 600))
+cv2.imshow( "", image )
+cv2.waitKey(0)
+cv2.imwrite(FILENAME + 'resized.png', image)
+
 detector = ObjectDetection()
 detector.setModelTypeAsRetinaNet()
 detector.setModelPath( os.path.join(execution_path , "resnet50_coco_best_v2.0.1.h5"))
 detector.loadModel()
-
 
 custom_objects = detector.CustomObjects(traffic_light = True)
 detections = detector.detectCustomObjectsFromImage(custom_objects=custom_objects, input_image=os.path.join(execution_path , file ), output_image_path=os.path.join(execution_path ,FILENAME + 'custom.png'), minimum_percentage_probability=30)
@@ -34,23 +39,40 @@ length = len(detections)
 
 print (length)
  
-tuple1 = detections[length - 1]
+#tuple1 = detections[length - 1]
 
-for key, value in tuple1.items():
-    #print( key, value )
-    if key == 'box_points' :
-        coordinates1 = value 
-        #print( coordinates )
-        
-yMin = coordinates1[1]-25
-yMax = coordinates1[3]+25
-xMin = coordinates1[0]
+minY = 0
+count = 0
 
-image = cv2.imread( FILENAME + 'custom.png' )
-height, width, _ = image.shape
-cropped1 = image[yMin:yMax, xMin:width ]
-cv2.imshow( 'traffic lights', cropped1 )
-cv2.waitKey(0)
+print ( detections )   
+
+if length > 0:
+    for i in range(length):
+        tuple1 = detections[i]
+        for key, value in tuple1.items():
+            if key == 'box_points':
+                if value[1] < minY:
+                    minY = value[1]
+                    count = i
+    
+    tuple1 = detections[count]
+    #tuple1 = detections[length - 1]
+    for key, value in tuple1.items():
+        #print( key, value )
+        if key == 'box_points' :
+            coordinates1 = value 
+            print( coordinates1 )
+            
+    yMin = coordinates1[1]-75
+    yMax = coordinates1[3]+75
+    xMin = coordinates1[0]
+    
+    image = cv2.imread( FILENAME + '.png' )
+    height, width, _ = image.shape
+    cropped1 = image[yMin:yMax, xMin: ]
+    cv2.imshow( 'traffic lights', cropped1 )
+    cv2.imwrite(FILENAME+'cropped.png', cropped1 )
+    cv2.waitKey(0)
 
 #############################################################
 def resizeToHeight(newHeight, oldImage):
@@ -136,8 +158,7 @@ def transform(pos):
  
 
 # load image
-
-img = cv2.imread(FILENAME + 'custom.png')
+img = cv2.imread( FILENAME + 'cropped.png')
 
 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
@@ -145,9 +166,9 @@ hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
 # define range of blue color in HSV
 
-lower_blue = np.array([110,50,50])
+lower_blue = np.array([100,50,50])
 
-upper_blue = np.array([130,255,255])
+upper_blue = np.array([140,255,255])
 
  
 
@@ -165,6 +186,8 @@ mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
 res = cv2.bitwise_and(img,img, mask= mask)
 
+cv2.imshow( "", res )
+cv2.waitKey(0)
  
 
 contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -274,7 +297,7 @@ image=cv2.cvtColor(dst,cv2.COLOR_BGR2GRAY)
 
 image = cv2.resize(image,(w,h),interpolation = cv2.INTER_AREA)
 
-cv2.imwrite( "test4.png", image)
+cv2.imwrite( "output.png", image)
 
 cv2.imshow("", image)
 
